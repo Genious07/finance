@@ -298,7 +298,7 @@ def generate_report_with_llm(stock_data, web_search_results, stock_name, ticker_
                     "content": prompt,
                 }
             ],
-            model="llama3-70b-8192", # Using a powerful Llama 3 model available on Groq. User mentioned llama-3.3-70b-versatile, ensure this is correct or use a known one.
+            model="gemma2-9b-it", # Using a powerful Llama 3 model available on Groq. User mentioned llama-3.3-70b-versatile, ensure this is correct or use a known one.
                                    # If "llama-3.3-70b-versatile" is a specific valid model, use that. Otherwise, llama3-70b-8192 is a good choice.
             # model="mixtral-8x7b-32768", # Alternative model if needed
         )
