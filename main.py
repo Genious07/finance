@@ -161,7 +161,7 @@ def generate_report_with_llm(stock_data, web_search_results, stock_name, ticker_
     {stock_summary_for_llm}
 
     **Recent Web Search Snippets/Information:**
-    {web_summary_for_llm}
+    
 
     **Report Requirements (Please structure your report with these sections in Markdown format):**
 
