@@ -5,11 +5,9 @@ from bs4 import BeautifulSoup
 from groq import Groq
 import os
 import pandas as pd
-import json # For robustly handling yfinance data
+import json 
 
-# --- Configuration ---
-# Ensure your Groq API key is set as an environment variable: GROQ_API_KEY
-# You can get a Groq API key from https://console.groq.com/keys
+
 try:
     client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
     GROQ_API_KEY_SET = bool(os.environ.get("GROQ_API_KEY"))
@@ -18,7 +16,7 @@ except Exception as e:
     GROQ_API_KEY_SET = False
     client = None
 
-# --- Helper Functions ---
+
 
 def fetch_stock_data(ticker_symbol):
     """
@@ -28,20 +26,17 @@ def fetch_stock_data(ticker_symbol):
     try:
         stock = yf.Ticker(ticker_symbol)
         
-        # Fetch various pieces of information
+       
         info = stock.info
         
-        # Convert non-serializable parts of info to string or handle them
-        # For example, 'companyOfficers' might be a list of dicts
-        # This is a basic sanitization; more complex structures might need specific handling
         for key, value in info.items():
             if isinstance(value, list) and value and isinstance(value[0], dict):
                 try:
-                    json.dumps(value) # Test if serializable
+                    json.dumps(value) 
                 except TypeError:
-                    info[key] = str(value) # Convert to string if not
+                    info[key] = str(value) 
             elif not isinstance(value, (str, int, float, bool, type(None))):
-                 # Attempt to convert other complex types to string
+                
                 try:
                     json.dumps({key: value})
                 except TypeError:
@@ -63,7 +58,7 @@ def fetch_stock_data(ticker_symbol):
         try:
             recommendations_df = stock.recommendations
             if recommendations_df is not None and not recommendations_df.empty:
-                recommendations = recommendations_df.tail().to_string() # Last 5 recommendations
+                recommendations = recommendations_df.tail().to_string() 
             else:
                 recommendations = "No recommendations data available."
         except Exception as e:
@@ -81,15 +76,11 @@ def fetch_stock_data(ticker_symbol):
             if 'balance_sheet_quarterly' not in financials_summary: financials_summary['balance_sheet_quarterly'] = "Error fetching."
             if 'cash_flow_quarterly' not in financials_summary: financials_summary['cash_flow_quarterly'] = "Error fetching."
 
-
-        # Safely get attributes, providing defaults if they don't exist
         company_name = info.get('longName', ticker_symbol)
         sector = info.get('sector', 'N/A')
         industry = info.get('industry', 'N/A')
         summary = info.get('longBusinessSummary', 'N/A')
-        
-        # Select a subset of 'info' for brevity in the LLM prompt, if needed
-        # For now, we'll pass a good chunk but be mindful of token limits
+
         relevant_info_keys = [
             'symbol', 'longName', 'sector', 'industry', 'country', 'website',
             'marketCap', 'enterpriseValue', 'trailingPE', 'forwardPE', 
@@ -103,8 +94,8 @@ def fetch_stock_data(ticker_symbol):
         return {
             "ticker": ticker_symbol,
             "company_name": company_name,
-            "info": brief_info, # Use the curated brief_info
-            "full_info_dump_for_display": info, # For display in UI
+            "info": brief_info, 
+            "full_info_dump_for_display": info, 
             "sector": sector,
             "industry": industry,
             "summary": summary,
@@ -119,85 +110,7 @@ def fetch_stock_data(ticker_symbol):
         return None
 
 def search_web_for_stock(stock_name, num_results=3):
-    """
-    Simulates a web search for stock news and analysis.
-    In a real application, you'd use a proper search API (e.g., Google Search API).
-    This function uses a placeholder for search and then attempts to scrape.
-    """
-    st.info(f"Simulating web search for '{stock_name}'... (This is a placeholder and might not yield deep results without a proper search API)")
-    search_query = f"latest news and analysis for {stock_name} stock"
-    
-    # Placeholder for actual search engine results.
-    # For a real app, integrate with Google Search API or similar.
-    # For this example, we'll try to construct some search URLs.
-    # This is highly unreliable and just for demonstration.
-    
-    # Attempting a simple DuckDuckGo search URL structure (results may vary)
-    # A more robust solution would be to use a library that interfaces with search engines
-    # or an actual search API. `googlesearch-python` is an option but can be flaky.
-    
-    urls = []
-    try:
-        # Using a simple search URL, this is not true scraping of a search engine
-        # but rather constructing a search query URL.
-        # For actual search results, a more robust method is needed.
-        # This is a simplified approach for demonstration.
-        
-        # Let's try to use a generic search engine query format.
-        # This is NOT a reliable way to get search results.
-        # A proper solution would use an API like Google Custom Search JSON API.
-        
-        # Fallback: Construct a Google search URL for manual inspection if needed
-        st.markdown(f"You can manually search on Google: [Search for {stock_name}](https://www.google.com/search?q={search_query.replace(' ', '+')})")
-        
-        # Since direct programmatic search is complex and often blocked without APIs,
-        # this part will be very limited. We'll try to fetch from a couple of financial news sites if possible,
-        # but this is highly dependent on their structure and anti-scraping measures.
-        
-        # For demonstration, let's imagine we got some URLs (these are examples)
-        # In a real scenario, these would come from a search API.
-        example_urls = [
-            f"https://finance.yahoo.com/quote/{stock_name.split(' ')[0]}/news", # Assuming stock_name might be like "AAPL"
-            # Add more generic financial news sites if needed, but scraping them is hard
-        ]
-        
-        # This part is more illustrative than functional for broad web scraping.
-        # I will return a placeholder message.
-        st.warning("Web search simulation is very basic. For real insights, integrate a proper search API or use specific financial news APIs.")
-        return ["Web search simulation: No reliable URLs fetched automatically for scraping in this basic example. Consider using financial news APIs for robust data."]
-
-    except Exception as e:
-        st.error(f"Error during web search simulation for {stock_name}: {e}")
-        return [f"Error during web search: {e}"]
-
-    # The following scraping part is illustrative if URLs were successfully obtained.
-    # Given the limitations above, it might not execute with meaningful URLs.
-    
-    content_snippets = []
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-
-    for url in urls[:num_results]: # Process only top N results
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status() # Raise an exception for HTTP errors
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # Extract text - this is generic and needs refinement for specific sites
-            paragraphs = soup.find_all('p', limit=3) # Get first 3 paragraphs
-            text_content = ' '.join([p.get_text() for p in paragraphs])
-            if text_content:
-                content_snippets.append(f"Source: {url}\nSnippet: {text_content[:500]}...") # Limit snippet length
-            else:
-                content_snippets.append(f"Source: {url}\nSnippet: Could not extract meaningful content.")
-        except requests.exceptions.RequestException as e:
-            content_snippets.append(f"Source: {url}\nSnippet: Error fetching or parsing URL: {e}")
-        except Exception as e:
-            content_snippets.append(f"Source: {url}\nSnippet: An unexpected error occurred: {e}")
-            
-    if not content_snippets:
-        return ["No relevant web content found or extracted."]
-        
-    return content_snippets
+    return
 
 
 def generate_report_with_llm(stock_data, web_search_results, stock_name, ticker_symbol):
@@ -207,10 +120,8 @@ def generate_report_with_llm(stock_data, web_search_results, stock_name, ticker_
     if not GROQ_API_KEY_SET or client is None:
         return "Groq API key not configured. Please set the GROQ_API_KEY environment variable."
 
-    # Prepare the data for the prompt
-    # We need to be careful about the length of the data passed to the LLM.
+
     
-    # Summary of stock data
     stock_summary_for_llm = f"""
     Company: {stock_data['company_name']} ({ticker_symbol})
     Sector: {stock_data['sector']}
@@ -240,7 +151,6 @@ def generate_report_with_llm(stock_data, web_search_results, stock_name, ticker_
     {stock_data['financials_summary']['cash_flow_quarterly']}
     """
 
-    # Summary of web search results
     web_summary_for_llm = "\n".join([f"- {result}" for result in web_search_results])
 
     prompt = f"""
@@ -291,16 +201,15 @@ def generate_report_with_llm(stock_data, web_search_results, stock_name, ticker_
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a financial analyst AI."
+                    "content": "You are a financial analyst AI. Generate reports in Markdown."
                 },
                 {
                     "role": "user",
                     "content": prompt,
                 }
             ],
-            model="gemma2-9b-it", # Using a powerful Llama 3 model available on Groq. User mentioned llama-3.3-70b-versatile, ensure this is correct or use a known one.
-                                   # If "llama-3.3-70b-versatile" is a specific valid model, use that. Otherwise, llama3-70b-8192 is a good choice.
-            # model="mixtral-8x7b-32768", # Alternative model if needed
+            model="moonshotai/kimi-k2-instruct",
+            temperature=0.6,
         )
         report = chat_completion.choices[0].message.content
         return report
@@ -370,11 +279,11 @@ if st.sidebar.button("🔍 Analyze Stock"):
                 st.subheader("Analyst Recommendations (Recent)")
                 st.text(stock_data['recommendations'])
             
-            # Web Search (Simulated)
+        
             with tab4:
                 st.subheader("Simulated Web Search Results")
                 with st.spinner(f"Searching web for {stock_data['company_name']}..."):
-                    # Using company name for web search
+                  
                     web_search_results = search_web_for_stock(stock_data['company_name']) 
                 
                 if web_search_results:
@@ -385,14 +294,12 @@ if st.sidebar.button("🔍 Analyze Stock"):
                 else:
                     st.write("No web search results to display.")
 
-            # Generate and Display LLM Report
             st.header("🤖 AI Generated Report")
             with st.spinner("Generating comprehensive report using AI... This might take a few moments."):
                 llm_report = generate_report_with_llm(stock_data, web_search_results, stock_data['company_name'], stock_data['ticker'])
             
             st.markdown(llm_report)
 
-            # Optionally display the full yfinance info dump for debugging or more details
             with st.expander("See Full Raw Stock Info (from yfinance)"):
                 st.json(stock_data['full_info_dump_for_display'])
         else:
