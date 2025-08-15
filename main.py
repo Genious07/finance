@@ -151,7 +151,7 @@ def generate_report_with_llm(stock_data, web_search_results, stock_name, ticker_
     {stock_data['financials_summary']['cash_flow_quarterly']}
     """
 
-    web_summary_for_llm = "\n".join([f"- {result}" for result in web_search_results])
+
 
     prompt = f"""
     You are an expert financial analyst. Your task is to generate a comprehensive investment report for {stock_name} ({ticker_symbol}).
