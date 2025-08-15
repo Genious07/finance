@@ -291,7 +291,7 @@ def generate_report_with_llm(stock_data, web_search_results, stock_name, ticker_
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a financial analyst AI. Generate reports in Markdown."
+                    "content": "You are a financial analyst AI."
                 },
                 {
                     "role": "user",
